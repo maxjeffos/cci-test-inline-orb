@@ -21,6 +21,22 @@ orbs:
             type: string
         steps:
           - run: echo "hello <<parameters.greeting_name>>, from the inline command"
+
+      inline_command_with_using_env_var:
+        # environment: # can't use `enviroment` at the `command` level
+        #   MY_ENV_VAR: "Some Value"
+        parameters:
+          greeting_name:
+            type: string
+        steps:
+          - run: echo "hello <<parameters.greeting_name>>, from the inline command"
+          - run:
+              name: Try Using Env Var defined in Orb
+              environment:
+                MY_RUN_LEVEL_ENV_VAR: "Some run-level env var value"
+              command: |
+                echo "MY_RUN_LEVEL_ENV_VAR: $MY_RUN_LEVEL_ENV_VAR"
+
     executors:
       my_inline_executor:
         parameters:
@@ -30,6 +46,20 @@ orbs:
         docker:
           - image: circleci/ruby:<<parameters.version>>
 
+jobs:
+  job_uses_my_command:
+    docker:
+      - image: circleci/node:lts
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Hello
+          command: |
+            echo "Hello"
+      - inline_example/inline_command_with_using_env_var:
+          greeting_name: foobar
+
 workflows:
   build-test-deploy:
     jobs:
@@ -38,3 +68,4 @@ workflows:
       - inline_example/my_inline_job:
           name: mybuild2
           greeting_name: world
+      - job_uses_my_command
